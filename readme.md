@@ -135,4 +135,4 @@ cv f,c 50 # Convert 50 Fahrenheit into c° (in this case 10)
 
 ---
 ### Error handling
-The [greeenux](https://github.com/benbenruru2-sys/Numworks-terminal/blob/main/greeenux.py) will automatically restart if it crashes (it will also display the reason of the crash)
+The [greeenux](https://github.com/benbenruru2-sys/Numworks-terminal/blob/main/greeenux.py) will automatically restart if it crashes (it will also display the reason of the crash) 
