@@ -1,1 +1,0 @@
-This is just a version of the code without any comments and bloat

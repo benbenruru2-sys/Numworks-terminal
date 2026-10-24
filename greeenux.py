@@ -19,7 +19,7 @@ def log(msg,type="DEBUG"):
         
 log("Debug is enabled!")
 
-def help():
+def help(): # Display basic help
     global separator
     print(separator,"""
 Commands :
@@ -37,7 +37,7 @@ Commands :
 -   cl <help>: shows help menu
 """,separator)
 
-atlas={
+atlas={ # Atlas for all commands, thanks to this, 'help' and 'cl' will lead to the same command
     "end":"stop",
     "stop":"stop",
     "exit":"stop",
@@ -69,10 +69,20 @@ atlas={
     "history":"history",
     "ans":"history",
     "atlas":"atlas",
-    "pass":"pass"
+    "pass":"pass",
+    "":"pass",
+    "pe":"pe",
+    "pureeval":"pe",
+    "pureval":"pe",
+    "compile":"pe",
+    "exec":"pe",
+    "variables":"var",
+    "variable":"var",
+    "var":"var",
+    "v":"var"
 }
 
-helpatlas={
+helpatlas={ # The '<this:cmd>' gets replaced by the command the user entered, so even if the backend name is 'cl', if the user used 'help', 'help' will be displayed instead of a different command that they might not know
     "stop":"The '<this:cmd>' command is used to close the calculator app",
     "cl":"The '<this:cmd> <str>'  command is used to display general help and help about specific commands\nExemple: '<this:cmd> cl' ",
     "eval":"The '<this:cmd> <str>' command is used to return the result of a expression.\n You can remplace a value with 'h' or 'ans', they will be replaced by the last result\nExemple: '<this:cmd> (5+3)*h' (output is 8 if ans=1)",
@@ -84,17 +94,38 @@ helpatlas={
     "p2":"The '<this:cmd> <float> <int>' command is used to multiply a number by successive powers of 2\nFirst parameter is the number to multiply\nSecond parameter is how many powers of 2 to compute: it prints one result for each power from 2^1 up to 2^<int>\nExemple: '<this:cmd> 3 4' (output is 6.0, 12.0, 24.0 and 48.0, one per line)",
     "conv":"The '<this:cmd> <str> <float>' command is used to convert number betwen diferent units\nDo '<this:cmd> cl' for help on available conversions\nExemple: '<this:cmd> c,f 20' (output is 68)",
     "cat":"MEOW",
-    "history":"The '<this:cmd> <str> <float>' command is used to manage result memory\nRead the built in documentation using '<this:cmd> cl' for more info\nExemple: '<this:cmd> a' (output is all the history)"    
+    "history":"The '<this:cmd> <str> <float>' command is used to manage result memory\nRead the built in documentation using '<this:cmd> cl' for more info\nExemple: '<this:cmd> a' (output is all the history)",
+    "var":"The '<this:cmd> <str> <str> <str>' command is used to manage variables\nRead the built in documentation using '<this:cmd> cl' for more info\nExemple: '<this:cmd> a' (output is every variable)",
+    "pe":"The '<this:cmd> <str>' command execute the code provided as a argument. If the argument is a known variable (sutch as '<this:cmd> atlas', it will print the 'atlas' variable)\nExample: '<this:cmd> print('hello world')' (output is 'hello world')"    
 }
 
-argatlas={
+exp={ # Thoses are common expressions, tied to the 'expthis()' function
+    "yes":"yes",
+    "on":"yes",
+    "y":"yes",
+    "no":"no",
+    "off":"no",
+    "n":"no",
+    "a":"all",
+    "all":"all",
+    "help":"cl",
+    "cl":"cl",
+    "c":"clear",
+    "clear":"clear",
+    "new":"new",
+    "n":"new",
+    "l":"last",
+    "last":"last"
+}
+
+argatlas={ # Everything in here will be replaced, even before the creations of the arguments
     "ha":"h a",
     "hc":"h c",
     "hl":"h l",
     "hn":"h n"
 }
 
-conversions={
+conversions={ # All data driven conversions, in this case 'ex' is the convertion formula, and the 'x' gets replaced by the number to convert
     "c,f":{"ex":"x*1.8+32","help":"Convert c° to f"},
     "f,c":{"ex":"(x-32)/1.8","help":"Convert f to c°"},
     "c,k":{"ex":"x+273.15","help":"Convert c° to kelvin"},
@@ -119,9 +150,12 @@ conversions={
     "rad,deg":{"ex":"x*57.2957795","help":"Convert radians to degrees"}
 }
 
-toremove=["cmd.","cmd","()","exec.","exec","  "]
-catchar = [r"    /_/\ ",r"    (0-0) ",r" _/    |",r"   ____/"] #Hes so silly and cute
-history = [1]
+toremove=["cmd.","cmd","()","exec.","  "] # Everything in here will be removed before code execution
+catchar = [r"    /_/\ ",r"    (0-0) ",r" _/    |",r"   ____/"] # Hes so silly and cute
+history = [1] # The history needs to have at least one value at all time
+variables = { # All variables are stored in a dictionary
+    "example":"hello"
+}
 
 def cat(): #Meow
     global catchar 
@@ -130,14 +164,25 @@ def cat(): #Meow
         
 def evalthis(input,historyidx=1):
     input = str(input)
+    for i in variables: # This replaces the variable placeholder with the value of the variable
+            input = input.replace("v,"+i,variables[i])
+            input = input.replace("v:"+i,variables[i])
     try: # Yes, ik this is one of the worst metods of testing for a number
         float(history[-1]) #Try to see if it is a number
         input = input.replace("h",str(history[-historyidx]))
         input = input.replace("ans",str(history[-historyidx]))
-    except: 
+    except: # If the last result in history in not a number, just remove the placeholder for history
         input = input.replace("h","")
         input = input.replace("ans","")
     return eval(input)
+
+def expthis(input): # Checks for common exepressions sutch as yes (y -> yes)
+    input = str(input)
+    input = input.lower().strip()
+    try:
+        return exp[input]
+    except:
+        return "Error"
 
 def main():
 
@@ -147,6 +192,7 @@ def main():
     global toremove
     global conversions
     global history
+    global variables
     
     # Intro message
     print(separator,"\nWelcome in Greeenux\nfor showing commands type : cl\n",separator)
@@ -158,18 +204,21 @@ def main():
     cl_count = 0
     while running:
         # Clean the input
-        console = input("\n> ").lower().strip()
-        for i in argatlas:
-            console = console.replace(i,argatlas[i])
+        console = input("\n> ").strip()
         for i in toremove:
             console = console.replace(i,"") 
-        parameters = console.split(" ")[1:]
-        console = console.split(" ")[0]
+        parts = console.split()
+        if parts:
+            command = parts[0].lower()
+            if command in argatlas:
+                parts = argatlas[command].split() + parts[1:]
+        console = parts[0].lower() if parts else ""
+        parameters = parts[1:] # Keep parameter casing while matching commands case-insensitively
 
-        log("Console: ",str(console))
-        log("Parameters: ",str(parameters))
+        log("Console: "+str(console))
+        log("Parameters: "+str(parameters))
         
-        if console in atlas:
+        if console in atlas: # Checks if the command even exist
 
             # Automatic help message counter
             if not nothing_found_count == 0:
@@ -178,8 +227,12 @@ def main():
             log("Nothing found count: ",str(nothing_found_count))
 
 
+            # If the user did not enter anything
+            if console == "":
+                print("Please enter a command")
+
             # Kill the terminal
-            if atlas[console] == "stop":
+            elif atlas[console] == "stop":
                 running = False
                 raise Exception("Program has been stopped by user")
 
@@ -221,6 +274,16 @@ def main():
             elif atlas[console] == "crash":
                 log("Crash for testing")
                 raise Exception("Crash for testing")
+            
+            elif atlas[console] == "pe":
+                toexecute = " ".join(parameters)
+                try:
+                    eval("print("+toexecute+")")
+                except:
+                    try:
+                        eval(toexecute)
+                    except:
+                        print("Error while trying to execute code!")
 
 
             # Eval numbers (kinda like a normal calculator)
@@ -286,6 +349,66 @@ def main():
             # Meow
             elif atlas[console] == "cat":
                 cat()
+                
+                
+            # Variables manager
+            elif atlas[console] == "var":
+                if parameters == []:
+                    print("Type 'var cl' for help")
+                    continue
+                vtype = expthis(parameters[0])
+                if vtype == "cl":
+                    print(separator,"\nVariable helper helper: ",end="")
+                    print("""
+-   n <varname> <value> (new): used to create a new variable/modify the content of a existing one
+-   'a'/'l' <varname> (all): print all the variables, or a specific variable if provided
+-   c <varname> (clear): delete the specified variable. Type '*' To delete every variable
+-   Tip!: You can use 'v:<varname' inside expressions, it will automaticly replace the 'v:<varname>' with the value of the provided variable""")
+                    print(separator)
+                    
+                if vtype == "new":
+                    if not len(parameters) == 3:
+                        print("'n' requires a varname and a value!")
+                    else:
+                        varname = str(parameters[1].lower().strip())
+                        varvalue = str(parameters[2])
+                        variables[varname]=varvalue
+                        print("Set '"+varname+"' to '"+varvalue+"'")
+                        
+                elif vtype == "all" or vtype == "last":
+                    if len(parameters) == 1:
+                        print(separator,"\nAll variables: ")
+                        for i in variables:
+                            print("-    ",i," -> ",variables[i])
+                        print(separator)
+                    else:
+                        if not len(parameters) == 2:
+                            print("'a'/'l' can only accept up to 1 aditional argument!")
+                        else:
+                            varname = parameters[1].lower().strip()
+                            if not varname in variables:
+                                print("This variable is unknown!")
+                            else:
+                                print("-    ",varname," -> ",variables[varname])
+                                
+                elif vtype == "clear":
+                    if len(parameters) == 1:   
+                        print("'c' requires a varname to delete!")
+                    else:
+                        varname = parameters[1].lower().strip()
+                        if varname == "*":
+                            parameters.append("") # Yes ik this is not a great solution, but it works
+                            if expthis(parameters[2]) == "yes":
+                                variables = {}
+                                print("all variables deleted!")
+                            else:
+                                print("add 'yes' as a parameter to confirm deletion!")
+                        elif not varname in variables:
+                            print("This variable is unknown!")
+                        else:
+                            del variables[varname]
+                            print(varname," deleted!")
+                
 
 
             # Result history manager
@@ -293,22 +416,21 @@ def main():
                 if parameters == []:
                     print("Type 'h cl' for help")
                     continue
-                htype = parameters[0]
-                if htype == "cl" or htype == "help":
+                htype = expthis(parameters[0])
+                if htype == "cl":
                     print(separator,"\nHistory helper: ",end="")
                     print("""
--  c (clear): clear history
--  l <index:default:1> (last): last result
--  n <number> (new): add a result to the history
--  a (all): print all the history
--  Tip!: using 'h' inside expressions, it will automaticly replace 'h' with the last result in history""")
+-   c (clear): clear history
+-   l <index:default:1> (last): last result
+-   n <number> (new): add a result to the history
+-   a (all): print all the history
+-   Tip!: You can use 'h' inside expressions, it will automaticly replace 'h' with the last result in history""")
                     print(separator)
-                    continue
-                elif htype =="c":
+                elif htype =="clear":
                     history=[1]
                     print("History cleared!")
                     
-                elif htype =="l":
+                elif htype =="last":
                     if len(parameters)==2:
                         index = int(parameters[1])
                     else:
@@ -319,12 +441,12 @@ def main():
                         thishistory = history[-index]
                         print("History at index ",index,": ",thishistory)
                         
-                elif htype =="n":
+                elif htype =="new":
                     parameters[1] = str(parameters[1])
                     history.append(parameters[1])
                     print("Added ",parameters[1]," to history")
                     
-                elif htype =="a":
+                elif htype =="all":
                     print(separator,"\nAll History: ")
                     for i in history:
                         print("-    ",i)
@@ -336,24 +458,29 @@ def main():
             
             # Conversion wizard   
             elif atlas[console] == "conv":
-                
                 if parameters == []:
                     print("Type 'conv cl' for help")
                     continue
 
-                cvtype=parameters[0].lower()
-                
+                cvtype=parameters[0].lower().strip()
                 if len(parameters)==1 and cvtype in conversions:
                     print("Please provide a number to convert")
                     continue
                 
-                if cvtype == "help" or cvtype == "cl":
-                    print(separator,"\nConversion helper: ")
-                    for i in conversions:
-                        print(i,": ",conversions[i]["help"])
+                if expthis(cvtype) == "cl":
+                    if len(parameters) == 1 or expthis(parameters[1])=="all":
+                        print(separator,"\nConversion helper: ")
+                        for i in conversions:
+                            print(i,": ",conversions[i]["help"])
+                        print(separator)
+                    else:
+                        if not parameters[1].lower() in conversions:
+                            print("This conversion does not exist, type 'conv cl' for help")
+                        else:
+                            print("Help for '",parameters[1],"': ")
+                            i = parameters[1]
+                            print(i,": ",conversions[i]["help"])
                         
-                    print(separator)
-
                 elif not cvtype in conversions:
                     print("This conversion does not exist, type 'conv cl' for help")
 
@@ -381,9 +508,8 @@ def main():
                 raise Exception("No definition matched!\nPlease fix the atlas!")
 
 
-        # If this code is ever ran, it means the user doomscrolled too much and doesn't even remember the "help" command
         else:
-            try:
+            try: # Try to eval the user input in the console
                 result = evalthis(console)
                 print("Result: ",result)
                 history.append(result)
@@ -391,7 +517,7 @@ def main():
             except:
                 nothing_found_count = nothing_found_count + 1
                 print("No matching command found!")
-            if nothing_found_count == 3:
+            if nothing_found_count == 3: # If this code is ever ran, it means the user doomscrolled too much and doesn't even remember the "help" command
                 print("To show commands type : 'cl'")
                 nothing_found_count = 0
 
