@@ -212,7 +212,9 @@ def main():
             command = parts[0].lower()
             if command in argatlas:
                 parts = argatlas[command].split() + parts[1:]
-        console = parts[0].lower() if parts else ""
+            console = parts[0].lower()
+        else:
+            console = ""
         parameters = parts[1:] # Keep parameter casing while matching commands case-insensitively
 
         log("Console: "+str(console))
