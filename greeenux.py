@@ -444,8 +444,7 @@ def main():
                         print("History at index ",index,": ",thishistory)
                         
                 elif htype =="new":
-                    parameters[1] = str(parameters[1])
-                    history.append(parameters[1])
+                    history.append(str(parameters[1]))
                     print("Added ",parameters[1]," to history")
                     
                 elif htype =="all":

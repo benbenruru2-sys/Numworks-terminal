@@ -1,10 +1,16 @@
 # This is the python config file
 # Do not edit unless you know what you are doing
 
-DEBUG=False
-separator = "-"*40
+DEBUG: bool=False
+separator: str="-"*40
 
-atlas={ # Atlas for all commands, thanks to this, 'help' and 'cl' will lead to the same command
+split: list|str=[" "]
+
+ERROR: str = "error"
+NOTICE: str = "notice"
+LOG: str = "log"
+
+atlas: dict[str,str]={ # Atlas for all commands, thanks to this, 'help' and 'cl' will lead to the same command
     "end":"stop",
     "stop":"stop",
     "exit":"stop",
@@ -49,7 +55,7 @@ atlas={ # Atlas for all commands, thanks to this, 'help' and 'cl' will lead to t
     "v":"var"
 }
 
-helpatlas={ # The '<this:cmd>' gets replaced by the command the user entered, so even if the backend name is 'cl', if the user used 'help', 'help' will be displayed instead of a different command that they might not know
+helpatlas: dict[str,str]={ # The '<this:cmd>' gets replaced by the command the user entered, so even if the backend name is 'cl', if the user used 'help', 'help' will be displayed instead of a different command that they might not know
     "stop":"The '<this:cmd>' command is used to close the calculator app",
     "cl":"The '<this:cmd> <str>'  command is used to display general help and help about specific commands\nExemple: '<this:cmd> cl' ",
     "eval":"The '<this:cmd> <str>' command is used to return the result of a expression.\n You can remplace a value with 'h' or 'ans', they will be replaced by the last result\nExemple: '<this:cmd> (5+3)*h' (output is 8 if ans=1)",
@@ -66,7 +72,7 @@ helpatlas={ # The '<this:cmd>' gets replaced by the command the user entered, so
     "pe":"The '<this:cmd> <str>' command execute the code provided as a argument. If the argument is a known variable (sutch as '<this:cmd> atlas', it will print the 'atlas' variable)\nExample: '<this:cmd> print('hello world')' (output is 'hello world')"    
 }
 
-exp={ # Thoses are common expressions, tied to the 'expthis()' function
+exp: dict[str,str]={ # Thoses are common expressions, tied to the 'expthis()' function
     "yes":"yes",
     "on":"yes",
     "y":"yes",
@@ -85,14 +91,14 @@ exp={ # Thoses are common expressions, tied to the 'expthis()' function
     "last":"last"
 }
 
-argatlas={ # Everything in here will be replaced, even before the creations of the arguments
+argatlas: dict[str,str]={ # Everything in here will be replaced, even before the creations of the arguments
     "ha":"h a",
     "hc":"h c",
     "hl":"h l",
     "hn":"h n"
 }
 
-conversions={ # All data driven conversions, in this case 'ex' is the convertion formula, and the 'x' gets replaced by the number to convert
+conversions: dict[str,dict[str,str]]={ # All data driven conversions, in this case 'ex' is the convertion formula, and the 'x' gets replaced by the number to convert
     "c,f":{"ex":"x*1.8+32","help":"Convert c° to f"},
     "f,c":{"ex":"(x-32)/1.8","help":"Convert f to c°"},
     "c,k":{"ex":"x+273.15","help":"Convert c° to kelvin"},
@@ -117,5 +123,5 @@ conversions={ # All data driven conversions, in this case 'ex' is the convertion
     "rad,deg":{"ex":"x*57.2957795","help":"Convert radians to degrees"}
 }
 
-toremove=["cmd.","cmd","()","exec.","  "] # Everything in here will be removed before code execution
-catchar = [r"    /_/\ ",r"    (0-0) ",r" _/    |",r"   ____/"] # Hes so silly and cute
+toremove: list[str]=["cmd.","cmd","()","exec.","  "] # Everything in here will be removed before code execution
+catchar: list[str]=[r"    /_/\ ",r"    (0-0) ",r" _/    |",r"   ____/"] # Hes so silly and cute
