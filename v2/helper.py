@@ -5,20 +5,16 @@ from config import ERROR,NOTICE,LOG
 
 def cat(catchar: list[str]=config.catchar) -> None: #Meow
     for i in catchar:
-        print(i)
+        printone(i)
         
 def evalthis(input: str,variables: dict[str,float|int],history: list[float|int],historyidx: int=1) -> float|int:
     input = str(input)
     for i in variables: # This replaces the variable placeholder with the value of the variable
-            input = input.replace("v,"+i,str(variables[i]))
-            input = input.replace("v:"+i,str(variables[i]))
-    try: # Yes, ik this is one of the worst metods of testing for a number
-        float(history[-1]) #Try to see if it is a number
-        input = input.replace("h",str(history[-historyidx]))
-        input = input.replace("ans",str(history[-historyidx]))
-    except: # If the last result in history in not a number, just remove the placeholder for history
-        input = input.replace("h","")
-        input = input.replace("ans","")
+        input = input.replace("v,"+i,str(variables[i])).replace("v:"+i,str(variables[i]))
+    if isinstance(history[-1], (int, float)):
+        input = input.replace("h",str(history[-historyidx])).replace("ans",str(history[-historyidx]))
+    else: # If the last result in history in not a number, just remove the placeholder for history
+        input = input.replace("h","").replace("ans","")
     return eval(input)
 
 def expthis(input: str,exp: dict[str,str]=config.exp) -> str: # Checks for common exepressions sutch as yes (y -> yes)
@@ -27,7 +23,7 @@ def expthis(input: str,exp: dict[str,str]=config.exp) -> str: # Checks for commo
     try:
         return exp[input]
     except:
-        return "Error"
+        return lang("error.generic")
  
  
  # This is just used to debug stuff, not really needed
@@ -38,14 +34,14 @@ def log(msg,type="DEBUG",DEBUG=config.DEBUG):
         type = str(type).upper()
         msg = str(msg)
         if DEBUG:
-            print(type,"> ", msg)
+            printone(type+"> "+msg)
     except:
-        print("DEBUG crashed!")
+        printone(lang("error.debug.crash"))
         
 # log("Debug is enabled!")
 
 def help(separator: str=config.separator) -> None: # Display basic help
-    print(separator,"""
+    printone(separator+"""
 Commands :
 -   stop : stop the program
 -   msg <msg>: print a message
@@ -59,7 +55,7 @@ Commands :
 -   h <c,l,n,a> <str>: manage result history
 -   cat : Silly cat
 -   cl <help>: shows help menu
-""",separator)
+"""+separator)
 
 class advprint:
     
@@ -68,7 +64,7 @@ class advprint:
         
     def printall(self):
         for i in self.ph:
-            print(i)
+            printone(i)
             
     def add(self,msg: str):
         self.ph.append(msg)
@@ -79,13 +75,17 @@ class advprint:
     def get_last(self) -> str:
         return self.ph[-1]
     
-    def merge_last(self,index: int=2):
+    def merge_last(self,index: int=2,mergewith: str=" "):
         if not index:
             self.ph.append(self.ph[-2]+self.ph[-1]) # appends -2+-1 to the print history
             del self.ph[-2] # Remove the 2 merged items
             del self.ph[-2] # Same line since the -3 became -2 after deleting -2
         if index:
-            pass
+            temp = self.ph[-index:-1]
+            for i in range(index):
+                del self.ph[-1]
+            self.ph.append(mergewith.join(temp))
+            
             
             
 # This is the replacement to log()
@@ -94,9 +94,9 @@ def throw(msg: str,type: str="log") -> None:
         raise Exception(msg)
     if type.lower() in ["log","debug","event"]:
         if config.DEBUG:
-            print(type.upper()," > ", msg)
+            printone(type.upper()+" > "+msg)
     if type.lower() in ["warning","notice","carful"]:
-        print(type.upper(),"! : ", msg)
+        printone(type.upper()+"! : "+msg)
             
         
 def process_input(input: str,toremove: list[str]=config.toremove,argatlas: dict[str,str]=config.argatlas) -> dict[str,str|list[str]]:
@@ -129,7 +129,7 @@ def is_command(check: str,command: str,atlas: dict[str,str]=config.atlas) -> boo
     if not check in atlas:
         return None
     if not command in atlas:
-        throw("Command check could not be satisfied: command is not present in atlas",ERROR)
+        throw(lang("error.atlas.internal.not_found"),ERROR)
         return None
     if atlas[check] == atlas[command]:
         return True
@@ -147,14 +147,19 @@ def expect_params(params: list[str]|dict[str,list[str]],check: list=[str,int]) -
     converted = []
     for item in params:
         expected = check[index]
-        if expected == "*":
-            converted.append(item)
-        elif expected == gettype(item):
+        if expect_type(item,expected):
             converted.append(item)
         else:
-            throw("Expected a "+gettype_name(expected)+" type item, but instead got a "+gettype_name(gettype(item))+" item at position "+str(index)+"!",ERROR)
+            throw(lang("error.params.wrong_param").format(gettype_name(expected),gettype_name(gettype(item)),str(index)),ERROR)
         index = index+1
     return converted
+
+def expect_type(check,expected) -> bool:
+    if isinstance(check,expected):
+        return True
+    if gettype(str(check))==expected or expected=="*":
+        return True
+    return False
 
 def pad(topad: list[str]|str,padamount: int,padwith: str=" ") -> list[str]|str:
     if len(topad) >= padamount:
@@ -173,10 +178,46 @@ def gettype(item: str): # Not perfect, but works good enough for now
         return bool
     elif item.isdigit():
         return int
-    elif item.replace(".","",1).isdigit():
+    elif item.replace(".","",1).replace(",","",1).isdigit():
         return float
     else:
         return str
     
 def gettype_name(item) -> str: # Input a bool, and instead of getting a ugly <'type':bool>, you get a nice 'bool'
     return {bool:"bool",int:"int",float:"float",list:"list",dict:"dict",str:"str"}[item]
+
+def getctx(ctx: dict, args: str|list) -> str|list:
+    if isinstance(args,str): # If the args is a string, convert it to a list
+        args=list(args)
+    output=[]
+    for item in args:
+        item=item.lower()
+        if not item in ctx:
+            throw(lang("error.ctx.internal.not_found").format(item),ERROR)
+        output.append(ctx[item])
+    if len(output)==1: # If there is only one item to return, then return it as a string
+        output=output[0]
+    return output
+
+def lang(path,ctx: dict=config.defaultctx,vocabulary: dict=config.vocabulary) -> str:
+    path=path.lower().strip()
+    vocabulary=vocabulary[ctx["lang"].lower()]
+    path=multi_split(path,[".","/","-"])
+    output: str="None"
+    if len(path)==0:
+        throw("Language path cannot be none",ERROR)
+    elif len(path)==1:
+        output = vocabulary[path[0]]
+    elif len(path)==2:
+        output = vocabulary[path[0]][path[1]]
+    elif len(path)==3:
+        output = vocabulary[path[0]][path[1]][path[2]]
+    elif len(path)==4:
+        output = vocabulary[path[0]][path[1]][path[2]][path[3]]
+    else:
+        throw("Could not find specified language path ({})".format(".".join(path)),ERROR)
+    return output
+
+
+def printone(topring: str):
+    print(topring)

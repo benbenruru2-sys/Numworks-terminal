@@ -125,3 +125,66 @@ conversions: dict[str,dict[str,str]]={ # All data driven conversions, in this ca
 
 toremove: list[str]=["cmd.","cmd","()","exec.","  "] # Everything in here will be removed before code execution
 catchar: list[str]=[r"    /_/\ ",r"    (0-0) ",r" _/    |",r"   ____/"] # Hes so silly and cute
+
+vocabulary: dict={
+    "en":{
+        "error":{
+            "debug":{
+                "crash":"DEBUG crashed!"
+            },
+            "atlas":{
+                "internal":{
+                    "not_found":"Command check could not be satisfied: command is not present in atlas"
+                }
+            },
+            "ctx":{
+                "internal":{
+                    "not_found":"Ctx argument {} is not present in current ctx"
+                }
+            },
+            "params":{
+                "wrong_param":"Expected a {} type item, but instead got a {} item at position {}!"
+            },
+            "generic":"Error"
+        },
+        "info":{
+        
+        },
+        "lang_info":"English language pack"
+    },
+    "fr":{
+        "error":{
+            "debug":{
+                "crash":"DEBUG a crashé!"
+            },
+            "atlas":{
+                "internal":{
+                    "not_found":"La verification de la comande n'a pas pu être satisfaite: la commande n'est pas présente dans l'atlas"
+                }
+            },
+            "ctx":{
+                "internal":{
+                    "not_found":"L'argument context {} n'est pas présent dans le context actuel"
+                }
+            },
+            "params":{
+                "wrong_param":"Un item de type {} était attendu, mais un item de type {} a été reçu à la position {} !"
+            },
+            "generic":"Erreur"
+        },
+        "info":{
+        
+        },
+        "lang_info":"Pack de langue française"
+    }
+}
+
+
+defaultctx: dict={
+    "lang":"en",
+    "history":[],
+    "variables":{
+        "example":"123"
+    }
+    
+}

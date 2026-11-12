@@ -365,7 +365,7 @@ def main():
 -   n <varname> <value> (new): used to create a new variable/modify the content of a existing one
 -   'a'/'l' <varname> (all): print all the variables, or a specific variable if provided
 -   c <varname> (clear): delete the specified variable. Type '*' To delete every variable
--   Tip!: You can use 'v:<varname' inside expressions, it will automaticly replace the 'v:<varname>' with the value of the provided variable""")
+-   Tip!: You can use 'v:<varname>' inside expressions, it will automaticly replace the 'v:<varname>' with the value of the provided variable""")
                     print(separator)
                     
                 if vtype == "new":
